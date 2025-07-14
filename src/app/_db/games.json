@@ -1,0 +1,35 @@
+[
+    {
+        "id": 1,
+        "rounds": {
+            "1": [
+                {
+                    "teams": {
+                        "A": [
+                            "JORIS",
+                            "ART"
+                        ],
+                        "B": [
+                            "DEIRDRA",
+                            "JONATHAN"
+                        ]
+                    },
+                    "winner": "A"
+                },
+                {
+                    "teams": {
+                        "A": [
+                            "LUC",
+                            "MAX"
+                        ],
+                        "B": [
+                            "BIANCA",
+                            "UDO"
+                        ]
+                    },
+                    "winner": "A"
+                }
+            ]
+        }
+    }
+]

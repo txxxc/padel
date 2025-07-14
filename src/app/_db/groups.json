@@ -1,0 +1,53 @@
+[
+    {
+        "id": 1,
+        "name": "Tuesdays, Villa Gadea",
+        "players" : [
+            "BOB",
+            "ADAM",
+            "DARCY",
+            "DJAR",
+            "DOTSIE",
+            "EDUARD",
+            "UDO",
+            "JONATHAN",
+            "LUC",
+            "PABLO",
+            "JORIS",
+            "BIANCA",
+            "CAROLINE",
+            "KELLY",
+            "MAX",
+            "PILAR",
+            "RYAN",
+            "JANIS"
+        ]
+    },
+    {
+        "id": 2,
+        "name": "Sundays, Calpe Tennis Club",
+        "players" : [
+            "BOB",
+            "ADAM",
+            "DEIRDRE",
+            "DERRY",
+            "DJAR",
+            "DOTSIE",
+            "EDUARD",
+            "UDO",
+            "JOHN",
+            "JONATHAN",
+            "LUC",
+            "PABLO",
+            "JORIS",
+            "BIANCA",
+            "CAROLINE",
+            "FRED",
+            "LEON",
+            "MAX",
+            "PILAR",
+            "RYAN",
+            "JANIS"
+        ]
+    }
+]
