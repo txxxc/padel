@@ -3,6 +3,7 @@
         "id": 1,
         "name": "Tuesdays, Villa Gadea",
         "players" : [
+            "ART",
             "BOB",
             "ADAM",
             "DARCY",
@@ -27,8 +28,9 @@
         "id": 2,
         "name": "Sundays, Calpe Tennis Club",
         "players" : [
-            "BOB",
+            "ART",
             "ADAM",
+            "BOB",
             "DEIRDRE",
             "DERRY",
             "DJAR",

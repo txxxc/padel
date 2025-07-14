@@ -1,6 +1,3 @@
-import GROUPS from '../_db/groups.json' with { type: "json" }
-import GAMES from '../_db/games.json' with { type: "json" }
-
 const generateTournament = (players) => {
 
     if (players.length < 12) {
