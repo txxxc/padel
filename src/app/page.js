@@ -253,7 +253,8 @@ export { Game }
 const GroupSelector = ({ onStart }) => {
   const [selectedGroupId, setSelectedGroupId] = useState(GROUPS[0]?.id || null)
   const [selectedPlayers, setSelectedPlayers] = useState([])
-  const group = GROUPS.find(g => g.id === selectedGroupId)
+  const group = GROUPS.find(g => g.id === Number(selectedGroupId))
+  console.log(group, selectedGroupId)
 
   const togglePlayer = (player) => {
     setSelectedPlayers(prev => prev.includes(player) ? prev.filter(p => p !== player) : [...prev, player])
