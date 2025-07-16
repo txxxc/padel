@@ -1,0 +1,56 @@
+[
+  {
+    "tournamentId": "dee83247-04c0-4995-9bae-9d038fd684e7",
+    "gameData": {
+      "rounds": [
+        {
+          "matches": [
+            {
+              "court": 1,
+              "teams": {
+                "teamA": [
+                  "JONATHAN",
+                  "DARCY"
+                ],
+                "teamB": [
+                  "LUC",
+                  "ART"
+                ]
+              },
+              "winners": null
+            },
+            {
+              "court": 2,
+              "teams": {
+                "teamA": [
+                  "JORIS",
+                  "BOB"
+                ],
+                "teamB": [
+                  "EDUARD",
+                  "UDO"
+                ]
+              },
+              "winners": null
+            },
+            {
+              "court": 3,
+              "teams": {
+                "teamA": [
+                  "PABLO",
+                  "DOTSIE"
+                ],
+                "teamB": [
+                  "ADAM",
+                  "DJAR"
+                ]
+              },
+              "winners": null
+            }
+          ]
+        }
+      ]
+    },
+    "fixedCourts": []
+  }
+]
