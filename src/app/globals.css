@@ -16,7 +16,7 @@
   :root {
     --background: oklch(13% 0.028 261.692);
     --foreground: #ededed;
-  }
+  } 
 }
 
 body {
