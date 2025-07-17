@@ -185,7 +185,7 @@ export default function Home() {
   }
 
   return (
-    <main className="container mx-auto max-w-4xl px-5 py-5 min-h-screen">
+    <main className="container mx-auto max-w-4xl p-2.5 min-h-screen">
 
 
       {!gamePlayers ? (
