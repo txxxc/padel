@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import GROUPS from '../data/groups.json' with { type: 'json' }
 import { MIN_PLAYERS, GROUP_SIZE } from './gameLogic'
 import { Dropdown } from '@/app/UI'
@@ -10,11 +10,18 @@ import { Dropdown } from '@/app/UI'
  * @param {Object} props
  * @param {Function} props.onStart - Callback to start the game with selected players.
  */
-const GroupSelector = ({ onStart }) => {
+const GroupSelector = ({ onStart, setSelectedGroupId2 }) => {
   const [selectedGroupId, setSelectedGroupId] = useState(GROUPS[0]?.id || null)
   const [selectedPlayers, setSelectedPlayers] = useState([])
   const group = GROUPS.find(g => g.id === Number(selectedGroupId))
 
+  useEffect(() => {
+    if (setSelectedGroupId2) {
+      setSelectedGroupId2(selectedGroupId)
+    }
+  }, [selectedGroupId, setSelectedGroupId2])
+
+  
   /**
    * Toggles a player's selection.
    * @param {string} player
@@ -37,7 +44,6 @@ const GroupSelector = ({ onStart }) => {
     <div className="space-y-6 bg-gray-800 rounded-lg p-6 shadow-md">
 
       <Dropdown
-        label="Pick a Group:"
         id="groupSelector"
         options={GROUPS.map(g => ({ value: g.id, label: g.name }))}
         value={selectedGroupId}
@@ -47,18 +53,20 @@ const GroupSelector = ({ onStart }) => {
       <div>
         <h3 className="mb-3 font-bold uppercase text-gray-400">Players</h3>
         <div className="grid grid-cols-3 gap-3 overflow-auto">
-          {group?.players.map(player => (
-            <div
-              key={player}
-              className={`cursor-pointer p-3 rounded-lg border text-center uppercase font-semibold transition-colors duration-200 ${selectedPlayers.includes(player)
-                ? 'bg-green-600 border-green-600 text-white'
-                : 'bg-gray-900 border-gray-700 text-gray-300 hover:bg-gray-700'
-                }`}
-              onClick={() => togglePlayer(player)}
-            >
-              {player}
-            </div>
-          ))}
+          {[...(group?.players || [])]
+            .sort((a, b) => a.localeCompare(b))
+            .map(player => (
+              <div
+                key={player}
+                className={`cursor-pointer p-3 rounded-lg border text-center uppercase font-semibold transition-colors duration-200 ${selectedPlayers.includes(player)
+                    ? 'bg-green-600 border-green-600 text-white'
+                    : 'bg-gray-900 border-gray-700 text-gray-300 hover:bg-gray-700'
+                  }`}
+                onClick={() => togglePlayer(player)}
+              >
+                {player}
+              </div>
+            ))}
         </div>
       </div>
       <button
@@ -67,7 +75,7 @@ const GroupSelector = ({ onStart }) => {
           ? 'bg-green-600 text-white hover:bg-green-700'
           : 'bg-gray-700 text-gray-400 cursor-not-allowed'
           }`}
-        onClick={() => onStart(selectedPlayers)}
+        onClick={() => onStart(selectedPlayers, selectedGroupId)}
       >
         Start Game
       </button>

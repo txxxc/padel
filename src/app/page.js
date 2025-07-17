@@ -10,12 +10,14 @@ import { Dropdown } from '@/app/UI'
  * Updates the tournament_id in the browser URL.
  * @param {string|null} tournamentId
  */
-const updateUrlTournamentId = (tournamentId) => {
+const updateUrlTournamentId = (tournamentId, groupId) => {
   const url = new URL(window.location)
   if (tournamentId) {
     url.searchParams.set('tournament_id', tournamentId)
+    url.searchParams.set('groupId', groupId)
   } else {
     url.searchParams.delete('tournament_id')
+    url.searchParams.delete('groupId')
   }
   window.history.replaceState(null, '', url.toString())
 }
@@ -29,6 +31,29 @@ const getTournamentIdFromUrl = () => {
   return params.get('tournament_id')
 }
 
+export function formatEuropeanDate(isoString) {
+  const date = new Date(isoString)
+  const dayOfWeek = date.toLocaleString('en-GB', { weekday: 'long' })
+  const day = date.getDate()
+  const month = date.toLocaleString('en-GB', { month: 'long' })
+  const year = date.getFullYear()
+  const hours = date.getHours().toString().padStart(2, '0')
+  const minutes = date.getMinutes().toString().padStart(2, '0')
+
+  // Get ordinal suffix
+  const suffix = (d) => {
+    if (d > 3 && d < 21) return 'th'
+    switch (d % 10) {
+      case 1: return 'st'
+      case 2: return 'nd'
+      case 3: return 'rd'
+      default: return 'th'
+    }
+  }
+
+  return `${dayOfWeek}, ${day}${suffix(day)} of ${month} ${year} at ${hours}:${minutes}`
+}
+
 /**
  * Main Home component.
  * Handles tournament selection, game creation, and state management.
@@ -39,18 +64,26 @@ export default function Home() {
   const [gamePlayers, setGamePlayers] = useState(null)
   const [savedTournaments, setSavedTournaments] = useState([])
   const [selectedTournamentId, setSelectedTournamentId] = useState(null)
+  const [selectedGroupId, setSelectedGroupId] = useState(1)
 
   /**
    * Fetches saved tournaments from DynamoDB and sets state.
    */
   useEffect(() => {
     const fetchSavedTournaments = async () => {
+      console.log('selectedGroupId:', selectedGroupId)
       try {
-        const response = await fetch('/api/dynamodb', { cache: 'no-store' })
+        const response = await fetch(`/api/dynamodb?groupId=${selectedGroupId}`, { cache: 'no-store' })
         if (!response.ok) throw new Error('Failed to fetch tournaments')
 
         const tournaments = await response.json()
-        const tournamentIds = tournaments.map(tournament => tournament.tournament_id)
+
+        // const tournamentIds = tournaments.map(tournament => tournament.tournament_id)
+
+        const tournamentIds = tournaments.map(tournament => ({
+          tournament_id: tournament.tournament_id,
+          tournament_name: tournament.name
+        }))
 
         setSavedTournaments(tournamentIds)
         // Get the tournament ID from the URL
@@ -71,16 +104,19 @@ export default function Home() {
       }
     }
     fetchSavedTournaments()
-  }, [])
-
+  }, [selectedGroupId])
+  const setGroupIdfromPicker = (groupId) => {
+    setSelectedGroupId(groupId)
+  }
   /**
    * Starts a new game and saves it to DynamoDB.
    * @param {Array} players
    */
-  const handleStartGame = async (players) => {
+  const handleStartGame = async (players, groupId) => {
     try {
       const newGame = createGame(players)
-      const group_id = '1' // Replace with your actual group_id logic
+      setSelectedGroupId(groupId)
+      const group_id = groupId
       const createdAt = new Date().toISOString()
 
       const gameDataWithKeys = {
@@ -90,7 +126,8 @@ export default function Home() {
         tournament_id: newGame.tournament_id,
         rounds: newGame.rounds,
         created_at: createdAt,
-        updated_at: createdAt
+        updated_at: createdAt,
+        name: formatEuropeanDate(createdAt)
       }
 
       const response = await fetch('/api/dynamodb', {
@@ -104,7 +141,8 @@ export default function Home() {
       setGamePlayers(players)
       setSelectedTournamentId(newGame.tournament_id)
       setGameKey((prev) => prev + 1)
-      updateUrlTournamentId(newGame.tournament_id)
+      updateUrlTournamentId(newGame.tournament_id, group_id)
+      setSavedTournaments(prev => [...prev, { tournament_id: newGame.tournament_id, tournament_name: gameDataWithKeys.name }])
     } catch (error) {
       console.error('Error starting game:', error)
     }
@@ -128,7 +166,7 @@ export default function Home() {
   const handleSelectSavedTournament = async (tournamentId) => {
     if (!tournamentId) return
     try {
-      const response = await fetch(`/api/dynamodb?tournament_id=${tournamentId}`, { cache: 'no-store' })
+      const response = await fetch(`/api/dynamodb?tournament_id=${tournamentId}&groupId=${selectedGroupId}`, { cache: 'no-store' })
       if (!response.ok) throw new Error('Failed to fetch the tournament')
       const savedGame = await response.json()
       if (savedGame) {
@@ -136,7 +174,7 @@ export default function Home() {
         setGamePlayers(savedGame.rounds[0]?.matches.flatMap(m => [...m.teams.teamA, ...m.teams.teamB]))
         setSelectedTournamentId(tournamentId)
         setGameKey(prev => prev + 1)
-        updateUrlTournamentId(tournamentId)
+        updateUrlTournamentId(tournamentId, selectedGroupId)
       }
     } catch {
       setSavedGameData(null)
@@ -148,24 +186,13 @@ export default function Home() {
 
   return (
     <main className="container mx-auto max-w-4xl px-5 py-5 min-h-screen">
-      {savedTournaments.length > 0 && (
-        <Dropdown
-        label="Load Saved Tournament:"
-        id="savedTournament"
-        options={[
-          { value: '', label: 'Select Game' },
-          ...savedTournaments.map(tid => ({ value: tid, label: tid }))
-        ]}
-        value={selectedTournamentId || ''}
-        onChange={e => handleSelectSavedTournament(e.target.value)}
-      />
-      )}
+
 
       {!gamePlayers ? (
-        <GroupSelector onStart={handleStartGame} />
+        <GroupSelector onStart={handleStartGame} setSelectedGroupId2={setGroupIdfromPicker} />
       ) : (
         <>
-          
+
           <Game
             key={gameKey}
             initialPlayers={gamePlayers}
@@ -178,6 +205,19 @@ export default function Home() {
             New game
           </button>
         </>
+      )}
+
+      {savedTournaments.length > 0 && (
+        <Dropdown
+          id="savedTournament"
+          options={[
+            { value: '', label: 'Select a previous group game' },
+            ...savedTournaments.map(tid => ({ value: tid.tournament_id, label: tid.tournament_name }))
+          ]}
+          value={selectedTournamentId || ''}
+          className={`mt-6`}
+          onChange={e => handleSelectSavedTournament(e.target.value)}
+        />
       )}
     </main>
   )

@@ -15,7 +15,8 @@ const dynamoDb = DynamoDBDocumentClient.from(client)
 /** GET: Fetch saved tournaments */
 export async function GET(req) {
     try {
-        const groupId = req.nextUrl.searchParams.get('groupId') || 'GROUP#1'
+
+        const groupId = `GROUP#${req.nextUrl.searchParams.get('groupId')}` || 'GROUP#1'
         const tournamentId = req.nextUrl.searchParams.get('tournament_id')
 
         console.log(tournamentId, groupId)

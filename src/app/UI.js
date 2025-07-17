@@ -40,6 +40,7 @@ const Match = ({ match, winner, onWinnerSelect }) => (
 
 
 const Dropdown = ({ label, id, options, value, onChange, className = '' }) => (
+  
   <div className="mb-4">
     {label && (
       <label htmlFor={id} className="block font-bold uppercase text-gray-300 mb-2">
@@ -50,7 +51,7 @@ const Dropdown = ({ label, id, options, value, onChange, className = '' }) => (
       id={id}
       value={value}
       onChange={onChange}
-      className={`border border-gray-600 bg-gray-900 text-gray-200 rounded px-3 py-2 font-semibold focus:outline-none focus:ring-2 focus:ring-green-500 w-full ${className}`}
+      className={`border border-gray-600 bg-gray-900 uppercase text-gray-200 rounded px-3 py-2 font-semibold focus:outline-none focus:ring-2 focus:ring-green-500 w-full ${className}`}
     >
       {options.map(opt => (
         <option key={opt.value} value={opt.value}>
