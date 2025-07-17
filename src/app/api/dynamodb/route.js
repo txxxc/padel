@@ -12,6 +12,7 @@ const client = new DynamoDBClient({
 })
 const dynamoDb = DynamoDBDocumentClient.from(client)
 
+console.log(`ENVS`, process.env.AWS_REGION, process.env.AWS_ACCESS_KEY_ID, process.env.AWS_SECRET_ACCESS_KEY)
 
 /** GET: Fetch saved tournaments */
 export async function GET(req) {
