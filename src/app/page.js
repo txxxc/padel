@@ -35,21 +35,21 @@ export default function Home() {
         // Fetch tournaments from DynamoDB via your API route
         const response = await fetch('/api/dynamodb', { cache: 'no-store' })
         if (!response.ok) throw new Error('Failed to fetch tournaments')
-  
+
         const tournaments = await response.json()
         const tournamentIds = tournaments.map(tournament => tournament.tournament_id)
-  
+
         setSavedTournaments(tournamentIds)
         console.log(`DynamoDB::`, tournamentIds)
-  
+
         // Get the tournament ID from the URL or fallback to the last saved tournament ID
         const urlTournamentId = getTournamentIdFromUrl()
         const tournamentId = urlTournamentId
-  
+
         if (tournamentId) {
           // Find the tournament with the matching ID
           const savedGame = tournaments.find(t => t.tournament_id === tournamentId)
-  
+
           if (savedGame) {
             console.log(`DynamoDB`, savedGame)
             setSavedGameData(savedGame)
@@ -64,16 +64,16 @@ export default function Home() {
         console.error('Error fetching saved tournaments or loading game data:', error)
       }
     }
-  
+
     fetchSavedTournaments()
   }, [])
-  
+
   const handleStartGame = async (players) => {
     try {
       const newGame = createGame(players)
       const group_id = '1' // Replace with your actual group_id logic
       const createdAt = new Date().toISOString()
-  
+
       const gameDataWithKeys = {
         PK: `GROUP#${group_id}`,
         SK: `GAME#${newGame.tournament_id}`,
@@ -83,7 +83,7 @@ export default function Home() {
         created_at: createdAt,
         updated_at: createdAt
       }
-  
+
       // Save to DynamoDB via API
       const response = await fetch('/api/dynamodb', {
         method: 'POST',
@@ -91,7 +91,7 @@ export default function Home() {
         body: JSON.stringify(gameDataWithKeys),
       })
       if (!response.ok) throw new Error('Failed to save tournament to DynamoDB')
-  
+
       // Update state
       setSavedGameData(gameDataWithKeys)
       setGamePlayers(players)
@@ -139,15 +139,15 @@ export default function Home() {
     <main className="container mx-auto max-w-4xl px-5 py-5 min-h-screen">
 
       {savedTournaments.length > 0 && (
-        <div className="mb-4 flex justify-center">
-          <label htmlFor="savedTournament" className="mr-2 font-semibold">
+        <div className="mb-6 flex justify-center">
+          <label htmlFor="savedTournament" className="mr-3 font-bold uppercase text-gray-300">
             Load Saved Tournament:
           </label>
           <select
             id="savedTournament"
             value={selectedTournamentId || ''}
             onChange={e => handleSelectSavedTournament(e.target.value)}
-            className="border rounded px-2 py-1"
+            className="border border-gray-600 bg-gray-900 text-gray-200 rounded px-3 py-2 font-semibold focus:outline-none focus:ring-2 focus:ring-green-500"
           >
             <option value="">-- Select Tournament --</option>
             {savedTournaments.map(tid => (
