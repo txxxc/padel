@@ -4,6 +4,10 @@ import { useEffect, useState } from 'react'
 import GROUPS from '../data/groups.json' with { type: 'json' }
 import { v4 as uuidv4 } from 'uuid'
 
+/** Constants for configuration */
+const MIN_PLAYERS = 12
+const GROUP_SIZE = 4
+
 /** Helper component to display a player */
 const Player = ({ name, isWinner, rounded }) => (
   <div className={`${rounded} text-gray-200 uppercase font-bold p-2.5 text-center relative z-2 ${isWinner ? 'text-white' : ''}`}>{name}</div>
@@ -47,15 +51,15 @@ const Match = ({ match, winner, onWinnerSelect }) => (
 /** Shuffles an array in-place */
 const shuffle = (arr) => {
   for (let i = arr.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [arr[i], arr[j]] = [arr[j], arr[i]];
+    const j = Math.floor(Math.random() * (i + 1))
+      ;[arr[i], arr[j]] = [arr[j], arr[i]]
   }
-  return arr;
+  return arr
 }
 
 /** Generates initial tournament round from player list */
 const generateTournament = (players) => {
-  if (players.length < 12 || players.length % 4 !== 0) return null
+  if (players.length < MIN_PLAYERS || players.length % GROUP_SIZE !== 0) return null
 
   const shuffledPlayers = shuffle([...players])
   const teams = []
@@ -80,7 +84,7 @@ const generateTournament = (players) => {
 }
 
 /** Initializes the game structure with tournament_id */
-export const createGame = (players) => {
+const createGame = (players) => {
   const tournament = generateTournament(players)
   if (!tournament) throw new Error('Player validation failed.')
 
@@ -90,7 +94,7 @@ export const createGame = (players) => {
 }
 
 /** Generates next round of matches based on previous winners */
-export const createNextRound = (fixedCourts, matches, winners) => {
+const createNextRound = (fixedCourts, matches, winners) => {
   const courtMap = {}
   fixedCourts.forEach(court => { courtMap[court] = [] })
 
@@ -135,7 +139,6 @@ const Game = ({ initialPlayers, savedGameData }) => {
   const [gameData, setGameData] = useState(savedGameData || null)
   const [editableRoundIndex, setEditableRoundIndex] = useState(0)
 
-  // fixedCourts derived dynamically from first round matches
   const fixedCourts = gameData?.rounds?.[0]?.matches.map(m => m.court).sort((a, b) => a - b) || []
 
   useEffect(() => {
@@ -155,9 +158,26 @@ const Game = ({ initialPlayers, savedGameData }) => {
   }, [initialPlayers, savedGameData])
 
   useEffect(() => {
-    if (gameData?.tournament_id) {
-      localStorage.setItem(`gameData_${gameData.tournament_id}`, JSON.stringify(gameData))
+    const saveGameData = async () => {
+      if (gameData?.tournament_id) {
+        // Save to localStorage
+        // localStorage.setItem(`gameData_${gameData.tournament_id}`, JSON.stringify(gameData))
+
+        // Save to tournaments.json via API
+        try {
+          const response = await fetch('/api/tournament', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(gameData),
+          })
+          if (!response.ok) throw new Error('Failed to save game data to server')
+        } catch (error) {
+          console.error('Error saving game data to server:', error)
+        }
+      }
     }
+
+    saveGameData()
   }, [gameData])
 
   const canEditRound = (idx) => gameData?.rounds?.[idx] && !gameData.rounds[idx].isComplete && idx === editableRoundIndex
@@ -176,23 +196,45 @@ const Game = ({ initialPlayers, savedGameData }) => {
     })
   }
 
-  const handleCompleteRound = () => {
+  const handleCompleteRound = async () => {
     const round = gameData?.rounds?.[editableRoundIndex]
-    if (!round || !round.matches.every(m => m.winners)) return alert('Please select winners for all matches.')
+    if (!round || !round.matches.every((m) => m.winners)) {
+      return alert('Please select winners for all matches.')
+    }
 
     const winnersObj = {}
-    round.matches.forEach(m => { winnersObj[m.court] = m.winners })
+    round.matches.forEach((m) => {
+      winnersObj[m.court] = m.winners
+    })
 
     const nextMatches = createNextRound(fixedCourts, round.matches, winnersObj)
 
-    setGameData(prev => {
-      const updatedRounds = [...prev.rounds]
-      updatedRounds[editableRoundIndex] = { ...round, isComplete: true }
-      updatedRounds.push({ matches: nextMatches, isComplete: false })
-      return { ...prev, rounds: updatedRounds }
-    })
+    const updatedGameData = {
+      ...gameData,
+      rounds: [
+        ...gameData.rounds.slice(0, editableRoundIndex),
+        { ...round, isComplete: true },
+        { matches: nextMatches, isComplete: false },
+      ],
+    }
 
+    setGameData(updatedGameData)
     setEditableRoundIndex(editableRoundIndex + 1)
+
+    // Save to localStorage
+    // localStorage.setItem(`gameData_${updatedGameData.tournament_id}`, JSON.stringify(updatedGameData))
+
+    // Save to tournaments.json via API
+    try {
+      const response = await fetch('/api/tournament', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updatedGameData),
+      })
+      if (!response.ok) throw new Error('Failed to save updated game data to server')
+    } catch (error) {
+      console.error('Error saving updated game data to server:', error)
+    }
   }
 
   const getKingOfCourt = () => {
@@ -212,12 +254,12 @@ const Game = ({ initialPlayers, savedGameData }) => {
     <div id="matches">
       {kingOfCourt ? (
         <div className="bg-green-500 rounded font-bold uppercase text-center py-2.5">
-          <h3 className="text-green-800 text-xs">Quings of the Court</h3>
+          <h3 className="text-green-800 text-xs">Kings of the Court</h3>
           <p className="text-xl">{kingOfCourt.join(' & ')}</p>
         </div>
       ) : (
         <div className="bg-gray-950 rounded font-bold uppercase text-center py-2.5">
-          <h3 className="text-gray-700 text-xs">Quings of the Court</h3>
+          <h3 className="text-gray-700 text-xs">Kings of the Court</h3>
           <p className="text-xl text-gray-600">No winner decided yet</p>
         </div>
       )}
@@ -247,20 +289,17 @@ const Game = ({ initialPlayers, savedGameData }) => {
   )
 }
 
-export { Game }
-
 /** Group selector for starting a new game */
 const GroupSelector = ({ onStart }) => {
   const [selectedGroupId, setSelectedGroupId] = useState(GROUPS[0]?.id || null)
   const [selectedPlayers, setSelectedPlayers] = useState([])
   const group = GROUPS.find(g => g.id === Number(selectedGroupId))
-  console.log(group, selectedGroupId)
 
   const togglePlayer = (player) => {
     setSelectedPlayers(prev => prev.includes(player) ? prev.filter(p => p !== player) : [...prev, player])
   }
 
-  const canStart = selectedPlayers.length >= 12 && selectedPlayers.length % 4 === 0
+  const canStart = selectedPlayers.length >= MIN_PLAYERS && selectedPlayers.length % GROUP_SIZE === 0
 
   return (
     <div className="space-y-4">
@@ -305,7 +344,6 @@ export default function Home() {
   const [savedTournaments, setSavedTournaments] = useState([])
   const [selectedTournamentId, setSelectedTournamentId] = useState(null)
 
-  // Helper functions
   const updateUrlTournamentId = (tournamentId) => {
     const url = new URL(window.location)
     if (tournamentId) {
@@ -332,43 +370,99 @@ export default function Home() {
     return tournaments
   }
 
-  // Load saved tournaments list on mount
   useEffect(() => {
-    const tournaments = getAllSavedTournaments()
-    setSavedTournaments(tournaments)
-
-    const urlTournamentId = getTournamentIdFromUrl()
-    if (urlTournamentId && tournaments.includes(urlTournamentId)) {
+    const fetchSavedTournaments = async () => {
       try {
-        const savedGame = localStorage.getItem(`gameData_${urlTournamentId}`)
-        if (savedGame) {
-          const parsedGame = JSON.parse(savedGame)
-          setSavedGameData(parsedGame)
-          setGamePlayers(parsedGame.rounds[0]?.matches.flatMap(m => [...m.teams.teamA, ...m.teams.teamB]))
-          setSelectedTournamentId(urlTournamentId)
-          setGameKey(prev => prev + 1)
+        // Fetch all tournaments from the server
+        const response = await fetch('/api/tournament', { cache: 'no-store' })
+        if (!response.ok) throw new Error('Failed to fetch tournaments')
+
+        const tournaments = await response.json()
+        const tournamentIds = tournaments.map(tournament => tournament.tournament_id)
+
+        setSavedTournaments(tournamentIds)
+        console.log(`API::`, tournamentIds)
+
+        // Get the tournament ID from the URL or fallback to the last saved tournament ID
+        const urlTournamentId = getTournamentIdFromUrl()
+        const tournamentId = urlTournamentId || localStorage.getItem('lastTournamentId')
+
+        if (tournamentId) {
+          // Find the tournament with the matching ID
+          const savedGame = tournaments.find(t => t.tournament_id === tournamentId)
+
+          if (savedGame) {
+            console.log(`API`, savedGame)
+            setSavedGameData(savedGame)
+            setGamePlayers(savedGame.rounds[0]?.matches.flatMap(m => [...m.teams.teamA, ...m.teams.teamB]))
+            setSelectedTournamentId(urlTournamentId)
+            setGameKey(prev => prev + 1)
+          } else {
+            console.warn('No saved game found for the given tournament ID')
+          }
         }
-      } catch (e) {
-        // Remove corrupted data
-        localStorage.removeItem(`gameData_${urlTournamentId}`)
-        setSavedGameData(null)
-        setGamePlayers(null)
-        setSelectedTournamentId(null)
-        updateUrlTournamentId(null)
+      } catch (error) {
+        console.error('Error fetching saved tournaments or loading game data:', error)
       }
     }
+
+    fetchSavedTournaments()
   }, [])
 
-  // Start new game with players
-  const handleStartGame = (players) => {
-    setSavedGameData(null)
-    setGamePlayers(players)
-    setSelectedTournamentId(null)
-    setGameKey(prev => prev + 1)
-    updateUrlTournamentId(null)
+  // useEffect(() => {
+  //   const tournaments = getAllSavedTournaments()
+  //   // setSavedTournaments(tournaments)
+  //   console.log(`LOCAL::`, tournaments)
+
+  //   // const urlTournamentId = getTournamentIdFromUrl()
+  //   // if (urlTournamentId && tournaments.includes(urlTournamentId)) {
+  //   //   try {
+  //   //     const savedGame = localStorage.getItem(`gameData_${urlTournamentId}`)
+  //   //     if (savedGame) {
+
+  //   //       const parsedGame = JSON.parse(savedGame)
+  //   //       console.log(`localstorage`,parsedGame)
+  //   //       setSavedGameData(parsedGame)
+  //   //       setGamePlayers(parsedGame.rounds[0]?.matches.flatMap(m => [...m.teams.teamA, ...m.teams.teamB]))
+  //   //       setSelectedTournamentId(urlTournamentId)
+  //   //       setGameKey(prev => prev + 1)
+  //   //     }
+  //   //   } catch (e) {
+  //   //     localStorage.removeItem(`gameData_${urlTournamentId}`)
+  //   //     setSavedGameData(null)
+  //   //     setGamePlayers(null)
+  //   //     setSelectedTournamentId(null)
+  //   //     updateUrlTournamentId(null)
+  //   //   }
+  //   // }
+  // }, [])
+
+  const handleStartGame = async (players) => {
+    try {
+      const newGame = createGame(players)
+
+      // Save to localStorage
+      // localStorage.setItem(`gameData_${newGame.tournament_id}`, JSON.stringify(newGame))
+      // localStorage.setItem('lastTournamentId', newGame.tournament_id)
+
+      // Save to tournaments.json via API
+      const response = await fetch('/api/tournament', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newGame),
+      })
+      if (!response.ok) throw new Error('Failed to save tournament to server')
+
+      // Update state
+      setSavedGameData(newGame)
+      setGamePlayers(players)
+      setSelectedTournamentId(newGame.tournament_id)
+      setGameKey((prev) => prev + 1)
+    } catch (error) {
+      console.error('Error starting game:', error)
+    }
   }
 
-  // Reset game & clear url param
   const handleResetGame = () => {
     setSavedGameData(null)
     setGamePlayers(null)
@@ -377,13 +471,20 @@ export default function Home() {
     updateUrlTournamentId(null)
   }
 
-  // Load a saved tournament from dropdown select
-  const handleSelectSavedTournament = (tournamentId) => {
+  const handleSelectSavedTournament = async (tournamentId) => {
+    console.log(tournamentId)
     if (!tournamentId) return
     try {
-      const savedGame = localStorage.getItem(`gameData_${tournamentId}`)
+
+      const response = await fetch(`/api/tournament?tournament_id=${tournamentId}`, { cache: 'no-store' })
+      if (!response.ok) throw new Error('Failed to fetch the tournament')
+      const savedGame = await response.json()
+      // const savedGame = savedGameJSON.tournament_id
+      // console.log(savedGame)
+
       if (savedGame) {
-        const parsedGame = JSON.parse(savedGame)
+        console.log(savedGame)
+        const parsedGame = savedGame
         setSavedGameData(parsedGame)
         setGamePlayers(parsedGame.rounds[0]?.matches.flatMap(m => [...m.teams.teamA, ...m.teams.teamB]))
         setSelectedTournamentId(tournamentId)
@@ -391,8 +492,7 @@ export default function Home() {
         updateUrlTournamentId(tournamentId)
       }
     } catch {
-      // corrupted data cleanup
-      localStorage.removeItem(`gameData_${tournamentId}`)
+      // localStorage.removeItem(`gameData_${tournamentId}`)
       setSavedGameData(null)
       setGamePlayers(null)
       setSelectedTournamentId(null)
@@ -402,9 +502,7 @@ export default function Home() {
 
   return (
     <main className="container mx-auto max-w-4xl px-5 py-5 min-h-screen">
-      <h1 className="text-3xl font-bold text-center mb-4">Pickleball Tournament</h1>
 
-      {/* Saved Games Dropdown */}
       {savedTournaments.length > 0 && (
         <div className="mb-4 flex justify-center">
           <label htmlFor="savedTournament" className="mr-2 font-semibold">
