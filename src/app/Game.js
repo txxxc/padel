@@ -191,7 +191,7 @@ const Game = ({ initialPlayers, savedGameData }) => {
                 <div key={idx}>
                     {/* Complete Tournament Button */}
                     {idx === gameData.rounds.length - 1 && !gameData.tournamentComplete && gameData.rounds.length > 1 && (
-                    <div className="py-5 flex flex-col gap-3">
+                    <div className="pb-5 pt-2.5 flex flex-col gap-3">
                     
                             <button
                                 onClick={async () => {
@@ -220,7 +220,7 @@ const Game = ({ initialPlayers, savedGameData }) => {
                     </div>
                     )}
 
-                    <div className="bg-gray-800 rounded pb-5">
+                    <div className="bg-gray-800 rounded pb-5 mb-2.5">
                         <h2 className="text-gray-500 text-center border-b border-gray-800 uppercase font-bold py-2.5 mx-2.5">
                             Round {idx + 1}
                         </h2>
