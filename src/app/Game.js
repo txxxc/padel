@@ -180,9 +180,7 @@ const Game = ({ initialPlayers, savedGameData }) => {
     const kingOfCourt = getKingOfCourt()
 
     if (!gameData) return null
-
-    console.log(gameData)
-
+    
     return (
         <div id="matches">
 
