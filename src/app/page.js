@@ -5,6 +5,7 @@ import { createGame } from './gameLogic'
 import GroupSelector from '@/app/GroupSelector'
 import Game from './Game'
 import { Dropdown } from '@/app/UI'
+import { useUser } from "@auth0/nextjs-auth0"
 
 const updateUrlTournamentId = (tournamentId, groupId) => {
   const url = new URL(window.location)
@@ -41,12 +42,17 @@ export function formatEuropeanDate(isoString) {
 }
 
 export default function Home() {
+  const { user, error, isLoading } = useUser()
+  console.log(user, error, isLoading)
+  
   const [savedGameData, setSavedGameData] = useState(null)
   const [gameKey, setGameKey] = useState(0)
   const [gamePlayers, setGamePlayers] = useState(null)
   const [savedTournaments, setSavedTournaments] = useState([])
   const [selectedTournamentId, setSelectedTournamentId] = useState(null)
   const [selectedGroupId, setSelectedGroupId] = useState(null)
+
+  
 
   // On initial load, set group and tournament from URL if present
   useEffect(() => {
@@ -160,8 +166,16 @@ export default function Home() {
     }
   }
 
+
   return (
     <main className="container mx-auto max-w-4xl p-2.5 min-h-screen">
+      <div className="space-y-6 bg-gray-800 rounded-lg p-6 shadow-md mb-2.5 uppercase font-bold">
+        { isLoading ? 
+          (<div>Loading</div>) :  
+            (user ? (<div><img className="rounded-full w-[32px] inline mr-5" src={user.picture} />{user.name}. <a className="text-green-600" href="/auth/logout">Log out</a></div>) : 
+            (<a href="/auth/login">Log in</a>))
+        }  
+      </div>
       {!gamePlayers ? (
         <GroupSelector
           onStart={handleStartGame}

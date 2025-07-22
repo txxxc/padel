@@ -178,9 +178,10 @@ const Game = ({ initialPlayers, savedGameData }) => {
     }, [gameData])
 
     const kingOfCourt = getKingOfCourt()
-
-    if (!gameData) return null
+    // document.querySelector('meta[name="description"]').setAttribute('content', `Quings of the Court are ${kingOfCourt.join(' & ')}`)
     
+    if (!gameData) return null
+
     return (
         <div id="matches">
 
