@@ -1,8 +1,13 @@
 [
     {
+        "id": 0,
+        "name": "---",
+        "players": []
+    },
+    {
         "id": 1,
         "name": "Tuesdays, Villa Gadea",
-        "players" : [
+        "players": [
             "ART",
             "BOB",
             "ADAM",
@@ -37,7 +42,7 @@
     {
         "id": 2,
         "name": "Sundays, Calpe Tennis Club",
-        "players" : [
+        "players": [
             "ART",
             "ADAM",
             "BOB",
