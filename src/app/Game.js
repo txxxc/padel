@@ -14,7 +14,7 @@ const initializePlayerStats = (players) => {
     })
     return stats
 }
-
+ 
 /**
  * Main Game component for managing tournament rounds and state.
  * @param {Object} props
