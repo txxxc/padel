@@ -1,11 +1,19 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { useUser } from "@auth0/nextjs-auth0"
 import GROUPS from '../data/groups.json' with { type: 'json' }
 import { MIN_PLAYERS, GROUP_SIZE } from './gameLogic'
 import { Dropdown } from './UI'
 
-const GroupSelector = ({ onStart, onGroupChange, groupId, savedTournaments, handleSelectSavedTournament }) => {
+const GroupSelector = ({
+  onStart,
+  onGroupChange,
+  groupId,
+  savedTournaments,
+  handleSelectSavedTournament
+}) => {
+  const { user } = useUser()
   const [selectedGroupId, setSelectedGroupId] = useState(groupId || GROUPS[0]?.id || 0)
   const [selectedPlayers, setSelectedPlayers] = useState([])
   const group = GROUPS.find(g => g.id === Number(selectedGroupId))
@@ -27,6 +35,10 @@ const GroupSelector = ({ onStart, onGroupChange, groupId, savedTournaments, hand
   }
 
   const togglePlayer = (player) => {
+    if (!user) {
+      alert('Please authenticate to create a game.')
+      return
+    }
     setSelectedPlayers(prev =>
       prev.includes(player)
         ? prev.filter(p => p !== player)
@@ -35,7 +47,7 @@ const GroupSelector = ({ onStart, onGroupChange, groupId, savedTournaments, hand
   }
 
   const canStart = selectedPlayers.length >= MIN_PLAYERS && selectedPlayers.length % GROUP_SIZE === 0
-  console.log('selectedGroupId:', selectedGroupId)
+
   return (
     <div className="space-y-6 bg-gray-800 rounded-lg p-6 shadow-md">
       <Dropdown
@@ -68,10 +80,11 @@ const GroupSelector = ({ onStart, onGroupChange, groupId, savedTournaments, hand
               <div
                 key={player}
                 className={`cursor-pointer p-3 rounded-lg border text-center uppercase font-semibold transition-colors duration-200 ${selectedPlayers.includes(player)
-                    ? 'bg-green-600 border-green-600 text-white'
-                    : 'bg-gray-900 border-gray-700 text-gray-300 hover:bg-gray-700'
-                  }`}
+                  ? 'bg-green-600 border-green-600 text-white'
+                  : 'bg-gray-900 border-gray-700 text-gray-300 hover:bg-gray-700'
+                  } ${!user ? 'opacity-50 cursor-not-allowed' : ''}`}
                 onClick={() => togglePlayer(player)}
+                title={!user ? 'Log in to select players' : ''}
               >
                 {player}
               </div>
@@ -79,20 +92,17 @@ const GroupSelector = ({ onStart, onGroupChange, groupId, savedTournaments, hand
         </div>
       </div>
 
-
-
       <button
-        disabled={!canStart}
-        className={`p-3 rounded-lg mt-4 font-bold text-sm uppercase w-full transition-colors duration-200 ${canStart
-            ? 'bg-green-600 text-white hover:bg-green-700'
-            : 'bg-gray-700 text-gray-400 cursor-not-allowed'
+        disabled={!user || !canStart}
+        className={`p-3 rounded-lg mt-4 font-bold text-sm uppercase w-full transition-colors duration-200 ${canStart && user
+          ? 'bg-green-600 text-white hover:bg-green-700'
+          : 'bg-gray-700 text-gray-400 cursor-not-allowed'
           }`}
-        onClick={() => onStart(selectedPlayers, selectedGroupId)}
+        onClick={() => user && onStart(selectedPlayers, selectedGroupId, user)}
       >
-        Start Game
+        {user ? 'Start Game' : 'Log in to Start Game'}
       </button>
     </div>
   )
 }
-
 export default GroupSelector

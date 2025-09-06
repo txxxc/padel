@@ -32,10 +32,6 @@ const Match = ({
   const aliasValue = (courtAliases && courtAliases[match.court]) || match.court_alias || ''
   const [alias, setAlias] = useState(aliasValue)
 
-  console.log("courtAliases", courtAliases)
-  console.log("aliasValue", aliasValue)
-  console.log("match.court_alias", match.court_alias)
-
   // Keep alias in sync if prop changes (e.g. after update)
   // (Optional: uncomment if you want to sync input with external changes)
   // useEffect(() => {
@@ -74,10 +70,12 @@ const Match = ({
           />
         ) : (
           <>
+            
+            {match.court === highestCourt ? 
+            (<span title="King Court" className="mr-2">👑</span>) :
+            (<span title="King Court" className="mr-2">🤞</span>)
+            }
             {aliasValue || `Court #${match.court}`}
-            {match.court === highestCourt && (
-              <span title="King Court" className="ml-1">👑</span>
-            )}
           </>
         )}
       </h1>

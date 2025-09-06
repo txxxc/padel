@@ -1,12 +1,16 @@
 import { useEffect, useState, useCallback } from 'react'
 import { Match } from '@/app/UI'
 import { createGame, createNextRound } from './gameLogic'
+import { useUser } from '@auth0/nextjs-auth0'
 
 /**
  * Initializes player stats object.
  * @param {Array} players
  * @returns {Object}
  */
+
+
+
 const initializePlayerStats = (players) => {
     const stats = {}
     players.forEach(p => {
@@ -193,19 +197,32 @@ const Game = ({ initialPlayers, savedGameData }) => {
     const kingOfCourt = getKingOfCourt()
 
     useEffect(() => {
-        let meta = document.querySelector('meta[name="description"]')
         const description = kingOfCourt && kingOfCourt.length
-          ? `Current Kings of the Court: ${kingOfCourt.join(' & ')}`
-          : 'No winner decided yet'
+            ? `Quings of the Court: ${kingOfCourt.join(' & ')}`
+            : 'No winner decided yet'
+
+        // Update meta description
+        let meta = document.querySelector('meta[name="description"]')
         if (meta) {
-          meta.setAttribute('content', description)
+            meta.setAttribute('content', description)
         } else {
-          meta = document.createElement('meta')
-          meta.name = 'description'
-          meta.content = description
-          document.head.appendChild(meta)
+            meta = document.createElement('meta')
+            meta.name = 'description'
+            meta.content = description
+            document.head.appendChild(meta)
         }
-      }, [kingOfCourt])
+
+        // Update og:description
+        let og = document.querySelector('meta[property="og:description"]')
+        if (og) {
+            og.setAttribute('content', description)
+        } else {
+            og = document.createElement('meta')
+            og.setAttribute('property', 'og:description')
+            og.content = description
+            document.head.appendChild(og)
+        }
+    }, [kingOfCourt])
     // document.querySelector('meta[name="description"]').setAttribute('content', `Quings of the Court are ${kingOfCourt.join(' & ')}`)
 
     const handleCourtAliasChange = (courtNumber, newAlias) => {
@@ -231,7 +248,7 @@ const Game = ({ initialPlayers, savedGameData }) => {
 
     if (!gameData) return null
 
-
+    const { user } = useUser()
 
     return (
         <div id="matches">
@@ -245,6 +262,10 @@ const Game = ({ initialPlayers, savedGameData }) => {
 
                             <button
                                 onClick={async () => {
+                                    if (!user) {
+                                        alert('Please log in to finish the tournament.')
+                                        return
+                                      }
                                     const confirmed = window.confirm("Are you sure you want to finish the tournament? There's no coming back.")
                                     if (!confirmed) return
                                     // Mark tournament as complete
@@ -264,7 +285,9 @@ const Game = ({ initialPlayers, savedGameData }) => {
                                         console.error('Error completing tournament:', error)
                                     }
                                 }}
-                                className="p-2.5 bg-indigo-500 mx-auto block rounded font-bold text-sm text-white hover:bg-indigo-600 transition-colors duration-200"
+                                className={`p-2.5 bg-indigo-500 mx-auto block rounded font-bold text-sm text-white hover:bg-indigo-600 transition-colors duration-200 ${
+                                    !user ? 'opacity-50 cursor-not-allowed' : ''
+                                  }`}
                             >
                                 FINISH TOURNAMENT HERE
                             </button>
@@ -292,12 +315,20 @@ const Game = ({ initialPlayers, savedGameData }) => {
                         {canEditRound(idx) && (
                             <div className="pt-5 flex flex-col gap-3">
                                 <button
-                                    onClick={handleCompleteRound}
-                                    className="p-2.5 bg-rose-500 mx-auto block rounded font-bold text-sm"
+                                    onClick={() => {
+                                        if (!user) {
+                                            alert('Please log in to complete the round.')
+                                            return
+                                        }
+                                        handleCompleteRound()
+                                    }}
+                                    className={`p-2.5 mx-auto block rounded font-bold text-sm ${user
+                                            ? 'bg-rose-500 text-white hover:bg-rose-600'
+                                            : 'bg-gray-700 text-gray-400 cursor-not-allowed'
+                                        }`}
                                 >
                                     COMPLETE ROUND
                                 </button>
-
                             </div>
                         )}
                     </div>

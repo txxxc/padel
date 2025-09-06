@@ -102,18 +102,15 @@ export default function Home() {
   }
 
   // Called when user starts a new game
-  const handleStartGame = async (players, groupId) => {
+  const handleStartGame = async (players, groupId, user) => {
+    console.log("user",user)
     try {
       const newGame = createGame(players)
       const createdAt = new Date().toISOString()
-
-      // 1. Get all unique court numbers from the first round
       const courtNumbers = newGame.rounds[0].matches.map(m => m.court)
-      // 2. Initialize court_aliases at the root
       const court_aliases = {}
       courtNumbers.forEach(court => { court_aliases[court] = '' })
-
-      // 3. Add court_aliases to the game data
+  
       const gameDataWithKeys = {
         PK: `GROUP#${groupId}`,
         SK: `GAME#${newGame.tournament_id}`,
@@ -123,7 +120,9 @@ export default function Home() {
         created_at: createdAt,
         updated_at: createdAt,
         name: formatEuropeanDate(createdAt),
-        court_aliases // <-- add this line
+        court_aliases,
+        created_by: user?.sub,
+        created_by_email: user?.email
       }
 
       const response = await fetch('/api/dynamodb', {
