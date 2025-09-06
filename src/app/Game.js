@@ -14,7 +14,7 @@ const initializePlayerStats = (players) => {
     })
     return stats
 }
- 
+
 /**
  * Main Game component for managing tournament rounds and state.
  * @param {Object} props
@@ -117,24 +117,37 @@ const Game = ({ initialPlayers, savedGameData }) => {
             winnersObj[m.court] = m.winners
         })
 
+        // Collect all court aliases from previous rounds
+        const courtAliases = {}
+        gameData.rounds.forEach(r => {
+            r.matches.forEach(m => {
+                if (m.court_alias) {
+                    courtAliases[m.court] = m.court_alias
+                }
+            })
+        })
+
+        // Generate next matches
         const nextMatches = createNextRound(fixedCourts, round.matches, winnersObj)
+
+        // Assign aliases to new matches
+        nextMatches.forEach(match => {
+            if (courtAliases[match.court]) {
+                match.court_alias = courtAliases[match.court]
+            }
+        })
 
         // Update player stats
         const updatedStats = { ...gameData.playerStats }
-
         round.matches.forEach(match => {
             const winnerTeam = match.teams[match.winners]
             const loserTeam = match.teams[match.winners === 'teamA' ? 'teamB' : 'teamA']
             winnerTeam.forEach(player => {
-                if (!updatedStats[player]) {
-                    updatedStats[player] = { wins: 0, losses: 0 }
-                }
+                if (!updatedStats[player]) updatedStats[player] = { wins: 0, losses: 0 }
                 updatedStats[player].wins += 1
             })
             loserTeam.forEach(player => {
-                if (!updatedStats[player]) {
-                    updatedStats[player] = { wins: 0, losses: 0 }
-                }
+                if (!updatedStats[player]) updatedStats[player] = { wins: 0, losses: 0 }
                 updatedStats[player].losses += 1
             })
         })
@@ -178,9 +191,47 @@ const Game = ({ initialPlayers, savedGameData }) => {
     }, [gameData])
 
     const kingOfCourt = getKingOfCourt()
+
+    useEffect(() => {
+        let meta = document.querySelector('meta[name="description"]')
+        const description = kingOfCourt && kingOfCourt.length
+          ? `Current Kings of the Court: ${kingOfCourt.join(' & ')}`
+          : 'No winner decided yet'
+        if (meta) {
+          meta.setAttribute('content', description)
+        } else {
+          meta = document.createElement('meta')
+          meta.name = 'description'
+          meta.content = description
+          document.head.appendChild(meta)
+        }
+      }, [kingOfCourt])
     // document.querySelector('meta[name="description"]').setAttribute('content', `Quings of the Court are ${kingOfCourt.join(' & ')}`)
-    
+
+    const handleCourtAliasChange = (courtNumber, newAlias) => {
+        setGameData(prev => {
+            const updatedCourtAliases = { ...(prev.court_aliases || {}) }
+            updatedCourtAliases[courtNumber] = newAlias
+
+            // Optionally, remove court_alias from matches if you want to keep it only at root
+            const updatedRounds = prev.rounds.map(round => ({
+                ...round,
+                matches: round.matches.map(match =>
+                    match.court === courtNumber
+                        ? { ...match, court_alias: undefined }
+                        : match
+                )
+            }))
+
+            return { ...prev, rounds: updatedRounds, court_aliases: updatedCourtAliases }
+        })
+    }
+
+    console.log("gameData", gameData)
+
     if (!gameData) return null
+
+
 
     return (
         <div id="matches">
@@ -190,16 +241,18 @@ const Game = ({ initialPlayers, savedGameData }) => {
                 <div key={idx}>
                     {/* Complete Tournament Button */}
                     {idx === gameData.rounds.length - 1 && !gameData.tournamentComplete && gameData.rounds.length > 1 && (
-                    <div className="pb-5 pt-2.5 flex flex-col gap-3">
-                    
+                        <div className="pb-5 pt-2.5 flex flex-col gap-3">
+
                             <button
                                 onClick={async () => {
+                                    const confirmed = window.confirm("Are you sure you want to finish the tournament? There's no coming back.")
+                                    if (!confirmed) return
                                     // Mark tournament as complete
                                     const updatedGameData = {
                                         ...gameData,
                                         rounds: gameData.rounds.slice(0, idx), // Remove the last round
                                         tournamentComplete: true
-                                      }
+                                    }
                                     setGameData(updatedGameData)
                                     try {
                                         await fetch('/api/dynamodb', {
@@ -215,22 +268,26 @@ const Game = ({ initialPlayers, savedGameData }) => {
                             >
                                 FINISH TOURNAMENT HERE
                             </button>
-                        
-                    </div>
+
+                        </div>
                     )}
 
                     <div className="bg-gray-800 rounded pb-5 mb-2.5">
                         <h2 className="text-gray-500 text-center border-b border-gray-800 uppercase font-bold py-2.5 mx-2.5">
                             Round {idx + 1}
                         </h2>
-                        {round.matches.map(match => (
-                            <Match
-                                key={match.court}
-                                match={match}
-                                winner={match.winners}
-                                onWinnerSelect={canEditRound(idx) ? (court, team) => handleWinnerSelect(court, team, idx) : undefined}
-                            />
-                        ))}
+                        {
+                            round.matches.map(match => (
+                                <Match
+                                    key={match.court}
+                                    match={match}
+                                    winner={match.winners}
+                                    onWinnerSelect={canEditRound(idx) ? (court, team) => handleWinnerSelect(court, team, idx) : undefined}
+                                    highestCourt={Math.max(...round.matches.map(m => m.court))}
+                                    onCourtAliasChange={handleCourtAliasChange}
+                                    courtAliases={gameData.court_aliases}
+                                />
+                            ))}
 
                         {canEditRound(idx) && (
                             <div className="pt-5 flex flex-col gap-3">

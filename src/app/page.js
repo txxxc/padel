@@ -43,8 +43,6 @@ export function formatEuropeanDate(isoString) {
 
 export default function Home() {
   const { user, error, isLoading } = useUser()
-  console.log(user, error, isLoading)
-
   const [savedGameData, setSavedGameData] = useState(null)
   const [gameKey, setGameKey] = useState(0)
   const [gamePlayers, setGamePlayers] = useState(null)
@@ -108,6 +106,14 @@ export default function Home() {
     try {
       const newGame = createGame(players)
       const createdAt = new Date().toISOString()
+
+      // 1. Get all unique court numbers from the first round
+      const courtNumbers = newGame.rounds[0].matches.map(m => m.court)
+      // 2. Initialize court_aliases at the root
+      const court_aliases = {}
+      courtNumbers.forEach(court => { court_aliases[court] = '' })
+
+      // 3. Add court_aliases to the game data
       const gameDataWithKeys = {
         PK: `GROUP#${groupId}`,
         SK: `GAME#${newGame.tournament_id}`,
@@ -116,8 +122,10 @@ export default function Home() {
         rounds: newGame.rounds,
         created_at: createdAt,
         updated_at: createdAt,
-        name: formatEuropeanDate(createdAt)
+        name: formatEuropeanDate(createdAt),
+        court_aliases // <-- add this line
       }
+
       const response = await fetch('/api/dynamodb', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
