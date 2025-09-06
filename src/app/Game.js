@@ -292,7 +292,7 @@ const Game = ({ initialPlayers, savedGameData }) => {
                                 FINISH TOURNAMENT HERE
                             </button>
 
-                        </div>
+                        </div> 
                     )}
 
                     <div className="bg-gray-800 rounded pb-5 mb-2.5">
