@@ -28,7 +28,7 @@ const initializePlayerStats = (players) => {
 const Game = ({ initialPlayers, savedGameData }) => {
     const [gameData, setGameData] = useState(savedGameData || null)
     const [editableRoundIndex, setEditableRoundIndex] = useState(0)
-
+ 
     // Get sorted list of courts for the current round
     const fixedCourts = gameData?.rounds?.[0]?.matches.map(m => m.court).sort((a, b) => a - b) || []
 
@@ -110,6 +110,7 @@ const Game = ({ initialPlayers, savedGameData }) => {
      * Also updates player stats.
      */
     const handleCompleteRound = useCallback(async () => {
+        
         const round = gameData?.rounds?.[editableRoundIndex]
         if (!round || !round.matches.every((m) => m.winners)) {
             alert('Please select winners for all matches.')
@@ -246,9 +247,9 @@ const Game = ({ initialPlayers, savedGameData }) => {
 
     console.log("gameData", gameData)
 
-    if (!gameData) return null
-
     const { user } = useUser()
+
+    if (!gameData) return null
 
     return (
         <div id="matches">
