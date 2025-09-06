@@ -73,7 +73,7 @@ const Match = ({
             
             {match.court === highestCourt ? 
             (<span title="King Court" className="mr-2">👑</span>) :
-            (<span title="King Court" className="mr-2">🤞</span>)
+            (<span title="Followers Court" className="mr-2">🤞</span>)
             }
             {aliasValue || `Court #${match.court}`}
           </>

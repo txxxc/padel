@@ -28,9 +28,9 @@ const initializePlayerStats = (players) => {
 const Game = ({ initialPlayers, savedGameData }) => {
     const [gameData, setGameData] = useState(savedGameData || null)
     const [editableRoundIndex, setEditableRoundIndex] = useState(0)
- 
+    const { user } = useUser()
     // Get sorted list of courts for the current round
-    const fixedCourts = gameData?.rounds?.[0]?.matches.map(m => m.court).sort((a, b) => a - b) || []
+    
 
     /**
      * Initializes game data on mount or when initialPlayers/savedGameData changes.
@@ -85,7 +85,7 @@ const Game = ({ initialPlayers, savedGameData }) => {
         (idx) => gameData?.rounds?.[idx] && !gameData.rounds[idx].isComplete && idx === editableRoundIndex,
         [gameData, editableRoundIndex]
     )
-
+    
     /**
      * Handles winner selection for a match.
      * @param {number} court
@@ -131,6 +131,7 @@ const Game = ({ initialPlayers, savedGameData }) => {
                 }
             })
         })
+        const fixedCourts = gameData?.rounds?.[0]?.matches.map(m => m.court).sort((a, b) => a - b) || []
 
         // Generate next matches
         const nextMatches = createNextRound(fixedCourts, round.matches, winnersObj)
@@ -180,7 +181,7 @@ const Game = ({ initialPlayers, savedGameData }) => {
         } catch (error) {
             console.error('Error saving updated game data to server:', error)
         }
-    }, [gameData, editableRoundIndex, fixedCourts])
+    }, [gameData, editableRoundIndex])
 
     /**
      * Returns the current "King of the Court" team.
@@ -247,7 +248,7 @@ const Game = ({ initialPlayers, savedGameData }) => {
 
     console.log("gameData", gameData)
 
-    const { user } = useUser()
+    
 
     if (!gameData) return null
 
@@ -306,7 +307,7 @@ const Game = ({ initialPlayers, savedGameData }) => {
                                     key={match.court}
                                     match={match}
                                     winner={match.winners}
-                                    onWinnerSelect={canEditRound(idx) ? (court, team) => handleWinnerSelect(court, team, idx) : undefined}
+                                    onWinnerSelect={user && canEditRound(idx) ? (court, team) => handleWinnerSelect(court, team, idx) : undefined}
                                     highestCourt={Math.max(...round.matches.map(m => m.court))}
                                     onCourtAliasChange={handleCourtAliasChange}
                                     courtAliases={gameData.court_aliases}

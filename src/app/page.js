@@ -6,6 +6,7 @@ import GroupSelector from '@/app/GroupSelector'
 import Game from './Game'
 import { Dropdown } from '@/app/UI'
 import { useUser } from "@auth0/nextjs-auth0"
+import Image from 'next/image'
 
 const updateUrlTournamentId = (tournamentId, groupId) => {
   const url = new URL(window.location)
@@ -179,7 +180,7 @@ export default function Home() {
       <div className="space-y-6 bg-gray-800 rounded-lg p-6 shadow-md mb-2.5 uppercase font-bold">
         {isLoading ?
           (<div>Loading</div>) :
-          (user ? (<div><img className="rounded-full w-[32px] inline mr-5" src={user.picture} />{user.name}. <a className="text-green-600" href="/auth/logout">Log out</a></div>) :
+          (user ? (<div><img alt="<>" width="32" height="32" className="rounded-full w-[32px] inline mr-5" src={user.picture} />{user.name}. <a className="text-green-600" href="/auth/logout">Log out</a></div>) :
             (<a href="/auth/login">Log in</a>))
         }
       </div>
