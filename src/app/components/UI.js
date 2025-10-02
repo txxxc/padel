@@ -1,4 +1,40 @@
-import { useState } from 'react'
+import React, { useState } from 'react'
+
+const commonClass = `bg-cyan-700 hover:bg-cyan-600 h-10 px-3 py-2 rounded font-bold transition-colors duration-200 uppercase focus:outline-none cursor-pointer`
+
+export const Button = ({
+  children,
+  className = '',
+  type = 'button',
+  disabled = false,
+  onClick,
+  ...props
+}) => (
+  <button
+    type={type}
+    disabled={disabled}
+    onClick={onClick}
+    className={`${commonClass} ${disabled ? 'opacity-50 cursor-not-allowed' : ''} ${className}`}
+    {...props}
+  >
+    {children}
+  </button>
+)
+
+export const LinkButton = ({
+  children,
+  className = '',
+  onClick,
+  ...props
+}) => (
+  <a
+    onClick={onClick}
+    className={`${commonClass} ${className}`}
+    {...props}
+  >
+    {children}
+  </a>
+)
 
 /** Helper component to display a player */
 const Player = ({ name, isWinner, rounded }) => (
@@ -100,7 +136,7 @@ const Match = ({
 
 const Dropdown = ({ label, id, options, value, onChange, className = '' }) => (
 
-  <div className="mb-4">
+  <div className="mb-0">
     {label && (
       <label htmlFor={id} className="block font-bold uppercase text-gray-300 mb-2">
         {label}

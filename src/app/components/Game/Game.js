@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from 'react'
-import { Match } from '@/app/UI'
+import { Button, Match } from '@/app/components/UI'
 import { createGame, createNextRound } from './gameLogic'
 import { useUser } from '@auth0/nextjs-auth0'
 
@@ -262,7 +262,7 @@ const Game = ({ initialPlayers, savedGameData }) => {
                     {idx === gameData.rounds.length - 1 && !gameData.tournamentComplete && gameData.rounds.length > 1 && (
                         <div className="pb-5 pt-2.5 flex flex-col gap-3">
 
-                            <button
+                            <Button
                                 onClick={async () => {
                                     if (!user) {
                                         alert('Please log in to finish the tournament.')
@@ -292,7 +292,7 @@ const Game = ({ initialPlayers, savedGameData }) => {
                                   }`}
                             >
                                 FINISH TOURNAMENT HERE
-                            </button>
+                            </Button>
 
                         </div> 
                     )}
@@ -316,7 +316,7 @@ const Game = ({ initialPlayers, savedGameData }) => {
 
                         {canEditRound(idx) && (
                             <div className="pt-5 flex flex-col gap-3">
-                                <button
+                                <Button
                                     onClick={() => {
                                         if (!user) {
                                             alert('Please log in to complete the round.')
@@ -324,13 +324,9 @@ const Game = ({ initialPlayers, savedGameData }) => {
                                         }
                                         handleCompleteRound()
                                     }}
-                                    className={`p-2.5 mx-auto block rounded font-bold text-sm ${user
-                                            ? 'bg-rose-500 text-white hover:bg-rose-600'
-                                            : 'bg-gray-700 text-gray-400 cursor-not-allowed'
-                                        }`}
                                 >
                                     COMPLETE ROUND
-                                </button>
+                                </Button>
                             </div>
                         )}
                     </div>

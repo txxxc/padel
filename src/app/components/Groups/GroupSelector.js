@@ -2,9 +2,9 @@
 
 import { useEffect, useState } from 'react'
 import { useUser } from "@auth0/nextjs-auth0"
-import GROUPS from '../data/groups.json' with { type: 'json' }
-import { MIN_PLAYERS, GROUP_SIZE } from './gameLogic'
-import { Dropdown } from './UI'
+// import GROUPS from '../data/groups.json' with { type: 'json' }
+import { MIN_PLAYERS, GROUP_SIZE } from '../Game/gameLogic'
+import { Button, Dropdown } from '../UI'
 
 const GroupSelector = ({
   onStart,
@@ -14,10 +14,23 @@ const GroupSelector = ({
   handleSelectSavedTournament
 }) => {
   const { user } = useUser()
-  const [selectedGroupId, setSelectedGroupId] = useState(groupId || GROUPS[0]?.id || 0)
+  const [groups, setGroups] = useState([])
+  // const [selectedGroupId, setSelectedGroupId] = useState(groupId || GROUPS[0]?.id || 0)
+  const [selectedGroupId, setSelectedGroupId] = useState(groupId || 0)
   const [selectedPlayers, setSelectedPlayers] = useState([])
-  const group = GROUPS.find(g => g.id === Number(selectedGroupId))
+  // const group = GROUPS.find(g => g.id === Number(selectedGroupId))
 
+  // Fetch groups from DynamoDB
+  useEffect(() => {
+    const fetchGroups = async () => {
+      const res = await fetch('/api/dynamodb/groups')
+      const data = await res.json()
+      setGroups(data)
+    }
+    fetchGroups()
+  }, [])
+
+  const group = groups.find(g => g.id === Number(selectedGroupId))
   // Sync local state with prop only when prop changes
   useEffect(() => {
     if (groupId && groupId !== selectedGroupId) {
@@ -53,7 +66,7 @@ const GroupSelector = ({
       <Dropdown
         label="Pick a Group:"
         id="groupSelector"
-        options={GROUPS.map(g => ({ value: g.id, label: g.name }))}
+        options={groups.map(g => ({ value: g.id, label: g.name }))}
         value={selectedGroupId}
         onChange={handleGroupChange}
       />
@@ -92,16 +105,13 @@ const GroupSelector = ({
         </div>
       </div>
 
-      <button
+      <Button
         disabled={!user || !canStart}
-        className={`p-3 rounded-lg mt-4 font-bold text-sm uppercase w-full transition-colors duration-200 ${canStart && user
-          ? 'bg-green-600 text-white hover:bg-green-700'
-          : 'bg-gray-700 text-gray-400 cursor-not-allowed'
-          }`}
+        className=""
         onClick={() => user && onStart(selectedPlayers, selectedGroupId, user)}
       >
         {user ? 'Start Game' : 'Log in to Start Game'}
-      </button>
+      </Button>
     </div>
   )
 }
