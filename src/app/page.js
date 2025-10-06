@@ -1,12 +1,15 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { createGame } from './gameLogic'
-import GroupSelector from '@/app/GroupSelector'
-import Game from './Game'
-import { Dropdown } from '@/app/UI'
+import { createGame } from './components/Game/gameLogic'
+import GroupSelector from '@/app/components/Groups/GroupSelector'
+import Game from './components/Game/Game'
+import { Button, Dropdown } from '@/app/components/UI'
 import { useUser } from "@auth0/nextjs-auth0"
 import Image from 'next/image'
+import { GroupManager } from './components/Groups/GroupManager'
+import { Profile } from './components/Profile'
+import GroupPanel from './components/Groups/GroupPanel'
 
 const updateUrlTournamentId = (tournamentId, groupId) => {
   const url = new URL(window.location)
@@ -22,7 +25,7 @@ const getTournamentIdFromUrl = () => {
   return { tournament_id: params.get('tournament_id'), group_id: params.get('groupId') }
 }
 
-export function formatEuropeanDate(isoString) {
+function formatEuropeanDate(isoString) {
   const date = new Date(isoString)
   const dayOfWeek = date.toLocaleString('en-GB', { weekday: 'long' })
   const day = date.getDate()
@@ -43,6 +46,7 @@ export function formatEuropeanDate(isoString) {
 }
 
 export default function Home() {
+
   const { user, error, isLoading } = useUser()
   const [savedGameData, setSavedGameData] = useState(null)
   const [gameKey, setGameKey] = useState(0)
@@ -50,8 +54,6 @@ export default function Home() {
   const [savedTournaments, setSavedTournaments] = useState([])
   const [selectedTournamentId, setSelectedTournamentId] = useState(null)
   const [selectedGroupId, setSelectedGroupId] = useState(null)
-
-
 
   // On initial load, set group and tournament from URL if present
   useEffect(() => {
@@ -68,9 +70,13 @@ export default function Home() {
         const response = await fetch(`/api/dynamodb?groupId=${selectedGroupId}`, { cache: 'no-store' })
         if (!response.ok) throw new Error('Failed to fetch tournaments')
         const tournaments = await response.json()
+        console.log(`tournaments`, tournaments)
         const tournamentIds = tournaments.map(tournament => ({
           tournament_id: tournament.tournament_id,
-          tournament_name: tournament.name
+          tournament_name: tournament.name,
+          tournamentComplete: tournament.tournamentComplete,
+          winners: tournament.winners || [],
+          created_at: tournament.created_at
         }))
         setSavedTournaments(tournamentIds)
 
@@ -104,14 +110,14 @@ export default function Home() {
 
   // Called when user starts a new game
   const handleStartGame = async (players, groupId, user) => {
-    console.log("user",user)
+    console.log("user", user)
     try {
       const newGame = createGame(players)
       const createdAt = new Date().toISOString()
       const courtNumbers = newGame.rounds[0].matches.map(m => m.court)
       const court_aliases = {}
       courtNumbers.forEach(court => { court_aliases[court] = '' })
-  
+
       const gameDataWithKeys = {
         PK: `GROUP#${groupId}`,
         SK: `GAME#${newGame.tournament_id}`,
@@ -177,40 +183,50 @@ export default function Home() {
 
   return (
     <main className="container mx-auto max-w-4xl p-2.5 min-h-screen">
-      <div className="space-y-6 bg-gray-800 rounded-lg p-6 shadow-md mb-2.5 uppercase font-bold">
-        {isLoading ?
-          (<div>Loading</div>) :
-          (user ? (<div><img alt="<>" width="32" height="32" className="rounded-full w-[32px] inline mr-5" src={user.picture} />{user.name}. <a className="text-green-600" href="/auth/logout">Log out</a></div>) :
-            (<a href="/auth/login">Log in</a>))
-        }
-      </div>
+
+      <Profile handleResetGame={handleResetGame} />
+
       {!gamePlayers ? (
 
-        <GroupSelector
-          onStart={handleStartGame}
+        <GroupPanel
+
+          onStartGame={handleStartGame}
           onGroupChange={handleGroupChange}
           groupId={selectedGroupId}
           savedTournaments={savedTournaments}
           handleSelectSavedTournament={handleSelectSavedTournament}
+          mode="select"
+
         />
+
+        // <GroupSelector
+        //   onStart={handleStartGame}
+        //   onGroupChange={handleGroupChange}
+        //   groupId={selectedGroupId}
+        //   savedTournaments={savedTournaments}
+        //   handleSelectSavedTournament={handleSelectSavedTournament}
+        // />
 
 
       ) : (
         <>
+
+
           <Game
             key={gameKey}
             initialPlayers={gamePlayers}
             savedGameData={savedGameData}
           />
-          <button
+
+          <Button
             onClick={handleResetGame}
-            className="mt-5 p-3 rounded-lg mb-5 font-bold text-sm uppercase w-full bg-rose-600 text-white hover:bg-rose-700 transition-colors duration-200"
+            className="w-full mt-4"
           >
             New game
-          </button>
+          </Button>
 
 
-          {savedTournaments.length > 0 && (
+          {/* {savedTournaments.length > 0 && (
             <Dropdown
               id="savedTournament"
               options={[
@@ -221,12 +237,9 @@ export default function Home() {
               className={`mt-6`}
               onChange={e => handleSelectSavedTournament(e.target.value)}
             />
-          )}
+          )} */}
         </>
       )}
-
-
-
 
     </main>
   )
