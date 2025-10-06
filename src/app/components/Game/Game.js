@@ -2,6 +2,9 @@ import { useEffect, useState, useCallback } from 'react'
 import { Button, Match } from '@/app/components/UI'
 import { createGame, createNextRound } from './gameLogic'
 import { useUser } from '@auth0/nextjs-auth0'
+import { useRouter } from 'next/navigation'
+
+
 
 /**
  * Initializes player stats object.
@@ -26,11 +29,13 @@ const initializePlayerStats = (players) => {
  * @param {Object} props.savedGameData - Previously saved game data.
  */
 const Game = ({ initialPlayers, savedGameData }) => {
+    const router = useRouter()
     const [gameData, setGameData] = useState(savedGameData || null)
     const [editableRoundIndex, setEditableRoundIndex] = useState(0)
     const { user } = useUser()
+    const [showStats, setShowStats] = useState(true)
     // Get sorted list of courts for the current round
-    
+
 
     /**
      * Initializes game data on mount or when initialPlayers/savedGameData changes.
@@ -81,11 +86,16 @@ const Game = ({ initialPlayers, savedGameData }) => {
      * @param {number} idx
      * @returns {boolean}
      */
-    const canEditRound = useCallback(
-        (idx) => gameData?.rounds?.[idx] && !gameData.rounds[idx].isComplete && idx === editableRoundIndex,
-        [gameData, editableRoundIndex]
-    )
-    
+    // const canEditRound = useCallback(
+    //     (idx) => gameData?.rounds?.[idx] && !gameData.rounds[idx].isComplete && idx === editableRoundIndex,
+    //     [gameData, editableRoundIndex]
+    // )
+
+    function canEditRound(idx) {
+        // Allow editing if this round is the last one and is not complete
+        return idx === gameData.rounds.length - 1 && !gameData.rounds[idx].isComplete && !gameData.tournamentComplete
+    }
+
     /**
      * Handles winner selection for a match.
      * @param {number} court
@@ -110,7 +120,7 @@ const Game = ({ initialPlayers, savedGameData }) => {
      * Also updates player stats.
      */
     const handleCompleteRound = useCallback(async () => {
-        
+
         const round = gameData?.rounds?.[editableRoundIndex]
         if (!round || !round.matches.every((m) => m.winners)) {
             alert('Please select winners for all matches.')
@@ -193,6 +203,7 @@ const Game = ({ initialPlayers, savedGameData }) => {
         if (!completed.length) return null
         const last = completed[completed.length - 1]
         const match = last.matches[last.matches.length - 1]
+        gameData.winners = match?.teams?.[match?.winners] || null
         return match?.teams?.[match?.winners] || null
     }, [gameData])
 
@@ -248,7 +259,7 @@ const Game = ({ initialPlayers, savedGameData }) => {
 
     console.log("gameData", gameData)
 
-    
+
 
     if (!gameData) return null
 
@@ -260,14 +271,51 @@ const Game = ({ initialPlayers, savedGameData }) => {
                 <div key={idx}>
                     {/* Complete Tournament Button */}
                     {idx === gameData.rounds.length - 1 && !gameData.tournamentComplete && gameData.rounds.length > 1 && (
-                        <div className="pb-5 pt-2.5 flex flex-col gap-3">
+                        <div className="pb-5 pt-2.5 grid grid-cols-1 gap-3">
+
+                            {/* <Button
+                                onClick={async () => {
+                                    if (!user) {
+                                        alert('Please log in to edit the tournament.')
+                                        return
+                                    }
+                                    if (idx < 1) {
+                                        alert('No previous round to uncomplete.')
+                                        return
+                                    }
+                                    const confirmed = window.confirm("Are you sure you want to uncomplete the previous round? This will allow editing its results.")
+                                    if (!confirmed) return
+
+                                    // Remove the current round and set previous as incomplete
+                                    const updatedRounds = [...gameData.rounds.slice(0, idx)]
+                                    updatedRounds[idx - 1] = { ...updatedRounds[idx - 1], isComplete: false }
+
+                                    const updatedGameData = {
+                                        ...gameData,
+                                        rounds: updatedRounds
+                                    }
+                                    setGameData(updatedGameData)
+                                    try {
+                                        await fetch('/api/dynamodb', {
+                                            method: 'POST',
+                                            headers: { 'Content-Type': 'application/json' },
+                                            body: JSON.stringify(updatedGameData),
+                                        })
+                                    } catch (error) {
+                                        console.error('Error updating tournament:', error)
+                                    }
+                                }}
+                                className={`bg-yellow-500 hover:bg-yellow-600 ${!user ? 'opacity-50 cursor-not-allowed' : ''}`}
+                            >
+                                UNCOMPLETE PREVIOUS
+                            </Button> */}
 
                             <Button
                                 onClick={async () => {
                                     if (!user) {
                                         alert('Please log in to finish the tournament.')
                                         return
-                                      }
+                                    }
                                     const confirmed = window.confirm("Are you sure you want to finish the tournament? There's no coming back.")
                                     if (!confirmed) return
                                     // Mark tournament as complete
@@ -287,14 +335,13 @@ const Game = ({ initialPlayers, savedGameData }) => {
                                         console.error('Error completing tournament:', error)
                                     }
                                 }}
-                                className={`p-2.5 bg-indigo-500 mx-auto block rounded font-bold text-sm text-white hover:bg-indigo-600 transition-colors duration-200 ${
-                                    !user ? 'opacity-50 cursor-not-allowed' : ''
-                                  }`}
+                                className={`bg-indigo-500 hover:bg-indigo-600 ${!user ? 'opacity-50 cursor-not-allowed' : ''
+                                    }`}
                             >
                                 FINISH TOURNAMENT HERE
                             </Button>
 
-                        </div> 
+                        </div>
                     )}
 
                     <div className="bg-gray-800 rounded pb-5 mb-2.5">
@@ -315,8 +362,9 @@ const Game = ({ initialPlayers, savedGameData }) => {
                             ))}
 
                         {canEditRound(idx) && (
-                            <div className="pt-5 flex flex-col gap-3">
+                            <div className="pt-5 flex flex-col gap-3 px-2.5">
                                 <Button
+                                    className="bg-orange-500 hover:bg-orange-600"
                                     onClick={() => {
                                         if (!user) {
                                             alert('Please log in to complete the round.')
@@ -328,6 +376,7 @@ const Game = ({ initialPlayers, savedGameData }) => {
                                     COMPLETE ROUND
                                 </Button>
                             </div>
+
                         )}
                     </div>
                 </div>
@@ -350,22 +399,58 @@ const Game = ({ initialPlayers, savedGameData }) => {
             {gameData.playerStats && (
                 <div className="mt-6">
                     <h3 className="font-bold uppercase text-gray-400 mb-2">Player Stats</h3>
-                    <div className="grid grid-cols-1 gap-2">
-                        {Object.entries(gameData.playerStats)
-                            .sort(([, a], [, b]) => {
-                                // Sort by wins descending, then losses ascending
-                                if (b.wins !== a.wins) return b.wins - a.wins
-                                return a.losses - b.losses
-                            })
-                            .map(([player, stats]) => (
-                                <div key={player} className="bg-gray-900 rounded p-2 text-gray-200 font-semibold flex justify-between">
-                                    <span>{player}</span>
-                                    <span>Wins: {stats.wins} | Losses: {stats.losses}</span>
-                                </div>
-                            ))}
-                    </div>
+                    {/* <Button
+                        className="mb-2"
+                        onClick={() => setShowStats(s => !s)}
+                    >
+                        {showStats ? 'Hide Player Stats' : 'Show Player Stats'}
+                    </Button> */}
+
+                    {showStats && (
+                        <div className="grid grid-cols-1 gap-2">
+                            {Object.entries(gameData.playerStats)
+                                .sort(([, a], [, b]) => {
+                                    // Sort by wins descending, then losses ascending
+                                    if (b.wins !== a.wins) return b.wins - a.wins
+                                    return a.losses - b.losses
+                                })
+                                .map(([player, stats]) => (
+                                    <div key={player} className="bg-gray-900 rounded p-2 text-gray-200 font-semibold flex justify-between">
+                                        <span>{player}</span>
+                                        <span>Wins: {stats.wins} | Losses: {stats.losses}</span>
+                                    </div>
+                                ))}
+                        </div>
+                    )}
                 </div>
             )}
+
+            <div className="w-full mt-4">
+                <Button
+                    onClick={async () => {
+                        console.log(`gameData`, gameData)
+                        if (!user) {
+                            alert('Please log in to delete the tournament.')
+                            return
+                        }
+                        const confirmed = window.confirm("Are you sure you want to delete this tournament? This action cannot be undone.")
+                        if (!confirmed) return
+                        try {
+                            await fetch('/api/dynamodb', {
+                                method: 'DELETE',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ PK: gameData.PK, SK: gameData.SK }),
+                            })
+                            router.push('/')
+                        } catch (error) {
+                            console.error('Error deleting tournament:', error)
+                        }
+                    }}
+                    className={`bg-rose-600 hover:bg-rose-700 w-full ${!user ? 'opacity-50 cursor-not-allowed' : ''}`}
+                >
+                    DELETE TOURNAMENT
+                </Button>
+            </div>
 
         </div>
     )

@@ -25,48 +25,50 @@ const Profile = () => {
 
     if (isLoading) {
         return (
-            <div className="flex items-center gap-3 bg-gray-950 rounded-lg p-4 shadow mb-2.5 font-bold text-gray-300">
+            <div className="flex items-center gap-3 bg-gray-900 rounded-lg p-4 shadow mb-2.5 font-bold text-gray-300">
                 <span className="animate-pulse">Loading...</span>
             </div>
         )
     }
 
     return (
-        <div className="flex items-center justify-between bg-gray-950 rounded-lg shadow mb-2.5">
+        <div className="flex items-center justify-between bg-gray-950 mb-3">
             {/* Logo on the left */}
-            <img
-                src="/logo.png"
-                alt="Logo"
-                width="32"
-                height="32"
-                className="w-8 h-8 rounded ml-2"
-            />
+            <a href="/">
+                <img
+                    src="/logo.png"
+                    alt="Logo"
+                    width="42"
+                    height="42"
+                    className="w-10 h-10 rounded"
+                />
+            </a>
 
             {/* Right side: login or user info */}
             {!user ? (
                 <LinkButton
                     href="/auth/login"
                 >
-                    Log in
+                    Sign in
                 </LinkButton>
             ) : (
                 <div className="relative" ref={dropdownRef}>
                     <Button
                         onClick={() => setDropdownOpen((open) => !open)}
-                        className="flex items-center gap-2"
+                        className="flex items-center gap-2 pl-0 pr-3 bg-gray-800 hover:bg-gray-700"
                     >
                         <img
                             alt={user.name || '<>'}
-                            width="40"
-                            height="40"
-                            className="rounded-full w-12 h-12"
+                            width="38"
+                            height="38"
+                            className="rounded-full w-9 h-9 block mr-1 bg-orange-500 ml-[1px]"
                             src={user.picture}
                         />
-                        <span className="font-semibold text-white hidden sm:inline">
+                        <span className="font-semibold hidden sm:inline">
                             {user.name?.includes('@') ? user.name.split('@')[0] : user.name}
                         </span>
                         <svg
-                            className="w-4 h-4 text-cyan-900 ml-1"
+                            className="w-4 h-4 ml-1"
                             fill="none"
                             stroke="currentColor"
                             strokeWidth="2"

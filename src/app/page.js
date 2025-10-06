@@ -70,9 +70,13 @@ export default function Home() {
         const response = await fetch(`/api/dynamodb?groupId=${selectedGroupId}`, { cache: 'no-store' })
         if (!response.ok) throw new Error('Failed to fetch tournaments')
         const tournaments = await response.json()
+        console.log(`tournaments`, tournaments)
         const tournamentIds = tournaments.map(tournament => ({
           tournament_id: tournament.tournament_id,
-          tournament_name: tournament.name
+          tournament_name: tournament.name,
+          tournamentComplete: tournament.tournamentComplete,
+          winners: tournament.winners || [],
+          created_at: tournament.created_at
         }))
         setSavedTournaments(tournamentIds)
 
@@ -180,7 +184,7 @@ export default function Home() {
   return (
     <main className="container mx-auto max-w-4xl p-2.5 min-h-screen">
 
-      <Profile />
+      <Profile handleResetGame={handleResetGame} />
 
       {!gamePlayers ? (
 
@@ -206,18 +210,23 @@ export default function Home() {
 
       ) : (
         <>
+
+
           <Game
             key={gameKey}
             initialPlayers={gamePlayers}
             savedGameData={savedGameData}
           />
+
           <Button
             onClick={handleResetGame}
+            className="w-full mt-4"
           >
             New game
           </Button>
 
-          {savedTournaments.length > 0 && (
+
+          {/* {savedTournaments.length > 0 && (
             <Dropdown
               id="savedTournament"
               options={[
@@ -228,7 +237,7 @@ export default function Home() {
               className={`mt-6`}
               onChange={e => handleSelectSavedTournament(e.target.value)}
             />
-          )}
+          )} */}
         </>
       )}
 

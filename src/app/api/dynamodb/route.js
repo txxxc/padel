@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { DynamoDBClient } from '@aws-sdk/client-dynamodb'
-import { DynamoDBDocumentClient, PutCommand, QueryCommand, GetCommand } from '@aws-sdk/lib-dynamodb'
+import { DynamoDBDocumentClient, PutCommand, QueryCommand, GetCommand, DeleteCommand} from '@aws-sdk/lib-dynamodb'
 
 // Configure DynamoDB client
 const client = new DynamoDBClient({
@@ -65,3 +65,23 @@ export async function POST(req) {
         return NextResponse.json({ error: 'Failed to save game' }, { status: 500 })
     }
 }
+
+
+export async function DELETE(req) {
+    try {
+      const body = await req.json()
+      const { PK, SK } = body
+      if (!PK || !SK) {
+        return NextResponse.json({ error: 'Missing PK or SK' }, { status: 400 })
+      }
+      const params = {
+        TableName: 'SavedGames',
+        Key: { PK, SK }
+      }
+      await dynamoDb.send(new DeleteCommand(params))
+      return NextResponse.json({ success: true })
+    } catch (error) {
+      console.error('Error deleting tournament:', error)
+      return NextResponse.json({ error: 'Failed to delete tournament' }, { status: 500 })
+    }
+  }

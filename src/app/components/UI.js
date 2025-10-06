@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 
-const commonClass = `bg-cyan-700 hover:bg-cyan-600 h-10 px-3 py-2 rounded font-bold transition-colors duration-200 uppercase focus:outline-none cursor-pointer`
+const commonClass = `text-white focus:outline-none font-bold rounded-full text-sm px-5 h-10 leading-10 text-center transition-all duration-500 bg-cyan-500 hover:bg-cyan-600 uppercase cursor-pointer disabled:bg-gray-500 disabled:cursor-not-allowed`
 
 export const Button = ({
   children,
@@ -14,7 +14,7 @@ export const Button = ({
     type={type}
     disabled={disabled}
     onClick={onClick}
-    className={`${commonClass} ${disabled ? 'opacity-50 cursor-not-allowed' : ''} ${className}`}
+    className={`${className} ${commonClass} ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
     {...props}
   >
     {children}
@@ -46,7 +46,7 @@ const CreateTeam = ({ players, id, onClick, isWinner }) => (
   <div
     id={id}
     onClick={onClick}
-    className={`cursor-pointer transition-all duration-300 ease-in-out p-0 rounded relative overflow-hidden ${isWinner ? 'bg-green-500' : 'bg-gray-700 hover:bg-gray-600'}`}
+    className={`cursor-pointer transition-all duration-300 ease-in-out p-0 rounded relative overflow-hidden ${isWinner ? 'bg-green-500' : 'bg-gray-700 hover:bg-gray-500'}`}
   >
     <Player name={players[0]} isWinner={isWinner} rounded="rounded-t pb-1" />
     <div className={`transition-all duration-300 ease-in-out text-center ${isWinner ? 'text-green-600' : 'text-gray-600'} -top-20 h-0 relative scale-700 z-1 opacity-75`}>&</div>
@@ -146,11 +146,11 @@ const Dropdown = ({ label, id, options, value, onChange, className = '' }) => (
       id={id}
       value={value}
       onChange={onChange}
-      className={`border border-gray-600 bg-gray-900 uppercase text-gray-200 rounded px-3 py-2 font-semibold focus:outline-none focus:ring-2 focus:ring-green-500 w-full ${className}`}
+      className={`text-white focus:outline-none font-bold rounded-full text-sm h-10 leading-10 text-center transition-all px-2.5 duration-500 border-2 border-cyan-500	hover:border-cyan-600 uppercase cursor-pointer disabled:bg-gray-500 disabled:cursor-not-allowed w-full ${className}`}
     >
       {options.map(opt => (
         <option key={opt.value} value={opt.value}>
-          {opt.label}
+          {`${opt.label}${opt.winners ? " : " + opt.winners : ""}`}
         </option>
       ))}
     </select>

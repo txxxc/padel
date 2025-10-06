@@ -25,6 +25,8 @@ const GroupPanel = ({
     const [ownerLoading, setOwnerLoading] = useState(false)
     const [panelMode, setPanelMode] = useState(mode)
 
+    console.log(`savedTournaments`, savedTournaments)
+
     useEffect(() => {
         const fetchGroups = async () => {
             const res = await fetch('/api/dynamodb/groups')
@@ -217,9 +219,10 @@ const GroupPanel = ({
     const canStart = selectedPlayers.length >= MIN_PLAYERS && selectedPlayers.length % GROUP_SIZE === 0
 
     return (
-        <div className="space-y-6 bg-gray-800 rounded-lg p-6 shadow-md mb-2.5">
-            <div className="mb-4">
-                {creatingGroup ? (
+        <div className="space-y-6 bg-gray-800 rounded-lg p-6 shadow-md">
+
+            {creatingGroup ? (
+                <div className="mb-6">
                     <div className="flex gap-2">
                         <input
                             type="text"
@@ -231,14 +234,19 @@ const GroupPanel = ({
                         <Button onClick={handleCreateGroup}>Save</Button>
                         <Button onClick={() => { setCreatingGroup(false); setNewGroupName('') }}>Cancel</Button>
                     </div>
-                ) : (
-                    user && panelMode === 'manage' && (
+                </div>
+            ) : (
+                user && panelMode === 'manage' && (
+                    <div className="mb-4">
+
                         <Button onClick={() => setCreatingGroup(true)}>
                             + Create New Group
                         </Button>
-                    )
-                )}
-            </div>
+
+                    </div>
+                )
+            )}
+
             <Dropdown
                 label="Your groups"
                 id="groupPanelSelector"
@@ -261,7 +269,7 @@ const GroupPanel = ({
                                         <span key={ownerId} className="bg-gray-700 text-white px-2 py-1 rounded flex items-center">
                                             {ownerId}
                                             {panelMode === 'manage' && isOwner && ownerId !== user.sub && selectedGroup.owners.length > 1 && (
-                                                <Button className="" onClick={() => handleRemoveOwner(ownerId)}>✖</Button>
+                                                <Button className="bg-red-500 hover:bg-red-500 hover:text-red-800 h-[16px] w-[16px] leading-[16px] px-[0px] ml-2.5" onClick={() => handleRemoveOwner(ownerId)}>✖</Button>
                                             )}
                                         </span>
                                     ))
@@ -303,21 +311,39 @@ const GroupPanel = ({
                             )}
                         </div>
                     }
+                    {/* Saved tournaments dropdown (if needed) */}
+                    {panelMode === 'select' && savedTournaments && savedTournaments.length > 0 && (
+                        <Dropdown
+                            id="savedTournament"
+                            options={[
+                                { value: '', label: 'Previous games' },
+                                ...[...savedTournaments]
+                                    .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+                                    .map(tid => ({
+                                        value: tid.tournament_id,
+                                        label: tid.tournament_name,
+                                        winners: tid.winners
+                                    }))
+                            ]}
+                            className="mt-4"
+                            onChange={e => handleSelectSavedTournament(e.target.value)}
+                        />
+                    )}
                     {/* Players */}
-                    <div className="mb-0">
-                        <h3 className="font-bold uppercase text-gray-400 mb-2 mt-4">Players</h3>
-                        <div className="grid grid-cols-3 gap-3">
+                    <div className="mb-0 mt-4">
+                        <h3 className="block font-bold uppercase text-gray-300 mb-2">Players</h3>
+                        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
                             {panelMode === 'manage' && isOwner
                                 ? [...selectedGroup.players].sort((a, b) => a.localeCompare(b)).map(player => (
                                     <div key={player} className="flex items-center justify-between bg-gray-900 p-2 rounded">
                                         <span>{player}</span>
-                                        <Button className="" onClick={() => handleRemovePlayer(player)}>✖</Button>
+                                        <Button className="bg-red-500 hover:bg-red-500 hover:text-red-800 h-[16px] w-[16px] leading-[16px] px-[0px] ml-2.5" onClick={() => handleRemovePlayer(player)}>✖</Button>
                                     </div>
                                 ))
                                 : [...selectedGroup.players].sort((a, b) => a.localeCompare(b)).map(player => (
                                     <div
                                         key={player}
-                                        className={`cursor-pointer p-3 rounded-lg border text-center uppercase font-semibold transition-colors duration-200 ${selectedPlayers.includes(player)
+                                        className={`text-white focus:ring-4 focus:outline-none focus:ring-blue-300 dark:focus:ring-blue-800 font-bold rounded-full text-sm px-5 py-2.5 text-center transition-all duration-500 bg-cyan-500 hover:bg-cyan-600 uppercase cursor-pointer ${selectedPlayers.includes(player)
                                             ? 'bg-green-600 border-green-600 text-white'
                                             : 'bg-gray-900 border-gray-700 text-gray-300 hover:bg-gray-700'
                                             } ${!user ? 'opacity-50 cursor-not-allowed' : ''}`}
@@ -355,7 +381,7 @@ const GroupPanel = ({
                     )}
                     {/* Delete group (manage mode) */}
                     {panelMode === 'manage' && isOwner && (
-                        <Button className="" onClick={handleDeleteGroup}>Delete Group</Button>
+                        <Button className="mr-2.5 bg-red-500 hover:bg-red-600 m-0" onClick={handleDeleteGroup}>Delete Group</Button>
                     )}
                     {isOwner && (
                         <Button
@@ -375,18 +401,7 @@ const GroupPanel = ({
                 </>
             )}
             {!user && <div className="text-gray-400 mt-4">Please log in to manage or select players and groups.</div>}
-            {/* Saved tournaments dropdown (if needed) */}
-            {panelMode === 'select' && savedTournaments && savedTournaments.length > 0 && (
-                <Dropdown
-                    id="savedTournament"
-                    options={[
-                        { value: '', label: 'Select a previous group game' },
-                        ...savedTournaments.map(tid => ({ value: tid.tournament_id, label: tid.tournament_name }))
-                    ]}
-                    className="mt-0"
-                    onChange={e => handleSelectSavedTournament(e.target.value)}
-                />
-            )}
+
         </div>
     )
 }
