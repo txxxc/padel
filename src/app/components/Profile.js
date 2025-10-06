@@ -2,6 +2,7 @@
 import { useUser } from '@auth0/nextjs-auth0'
 import { useState, useRef, useEffect } from 'react'
 import { Button, LinkButton } from './UI'
+import Link from 'next/link'
 
 const Profile = () => {
     const { user, isLoading } = useUser()
@@ -34,7 +35,7 @@ const Profile = () => {
     return (
         <div className="flex items-center justify-between bg-gray-950 mb-3">
             {/* Logo on the left */}
-            <a href="/">
+            <Link href="/">
                 <img
                     src="/logo.png"
                     alt="Logo"
@@ -42,7 +43,7 @@ const Profile = () => {
                     height="42"
                     className="w-10 h-10 rounded"
                 />
-            </a>
+            </Link>
 
             {/* Right side: login or user info */}
             {!user ? (
