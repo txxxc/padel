@@ -28,7 +28,7 @@ const initializePlayerStats = (players) => {
  * @param {Array} props.initialPlayers - Initial list of players.
  * @param {Object} props.savedGameData - Previously saved game data.
  */
-const Game = ({ initialPlayers, savedGameData }) => {
+const Game = ({ initialPlayers, savedGameData, handleResetGame }) => {
     const router = useRouter()
     const [gameData, setGameData] = useState(savedGameData || null)
     const [editableRoundIndex, setEditableRoundIndex] = useState(0)
@@ -441,6 +441,7 @@ const Game = ({ initialPlayers, savedGameData }) => {
                                 headers: { 'Content-Type': 'application/json' },
                                 body: JSON.stringify({ PK: gameData.PK, SK: gameData.SK }),
                             })
+                            handleResetGame && handleResetGame()
                             router.push('/')
                         } catch (error) {
                             console.error('Error deleting tournament:', error)
