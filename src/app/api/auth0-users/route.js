@@ -17,6 +17,8 @@ async function getManagementToken() {
   const clientSecret = process.env.AUTH0_MGMT_CLIENT_SECRET
   const audience = `https://${domain}/api/v2/`
 
+  console.log(`AUTH0 CREDENTIALS:`,clientId, clientSecret, audience)
+
   const tokenRes = await fetch(`https://${domain}/oauth/token`, {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
