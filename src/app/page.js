@@ -216,6 +216,7 @@ export default function Home() {
             key={gameKey}
             initialPlayers={gamePlayers}
             savedGameData={savedGameData}
+            handleResetGame={handleResetGame}
           />
 
           <Button
